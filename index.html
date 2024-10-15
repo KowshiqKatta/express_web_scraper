@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrape Multiple Websites</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .loading {
+            font-style: italic;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Scraped Data from Multiple Websites</h1>
+
+    <textarea id="urls" rows="5" cols="50" placeholder="Enter one URL per line"></textarea>
+    <br />
+    <button id="scrapeButton">Scrape Durations</button>
+    
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('scrapeButton').addEventListener('click', () => {
+            const resultDiv = document.getElementById('results');
+            resultDiv.innerHTML = 'Loading...';
+
+            // Get the URLs from the textarea
+            const urls = document.getElementById('urls').value.split('\n').map(url => url.trim()).filter(url => url);
+
+            if (urls.length === 0) {
+                resultDiv.innerHTML = 'Please enter at least one URL.';
+                return;
+            }
+
+            // Send URLs to the server
+            fetch('http://localhost:3000/scrape-durations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ urls }), // Sending array of URLs
+            })
+            .then(response => response.json())
+            .then(data => {
+                resultDiv.innerHTML = ''; // Clear the loading message
+
+                data.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    if (result.error) {
+                        resultElement.classList.add('error');
+                        resultElement.textContent = `Error scraping ${result.url}: ${result.error}`;
+                    } else {
+                        resultElement.textContent = `Duration for ${result.url}: ${result.duration || 'Not Found'}`;
+                    }
+                    resultDiv.appendChild(resultElement);
+                });
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `Error: ${error}`;
+            });
+        });
+    </script>
+
+</body>
+</html>
